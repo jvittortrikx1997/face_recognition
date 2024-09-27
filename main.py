@@ -5,7 +5,7 @@ from datetime import datetime
 
 db_config = {
     'user': 'root',
-    'password': '040498',
+    'password': '',
     'host': 'localhost',
     'database': 'tcc'
 }
@@ -27,25 +27,27 @@ def get_blacklist_images():
         INNER JOIN imagem ON blacklist.pesid = imagem.pesid
     """
     cursor.execute(query)
-    return cursor.fetchall()
+    return [(pesid, os.path.basename(caminho_imagem)) for pesid, caminho_imagem in cursor.fetchall()]
 
-def compare_images(solicitante_image, blacklist_images):
+def compare_images(solicitante_image, blacklist_images, base_dir):
     solicitante_img = face_recognition.load_image_file(solicitante_image)
     solicitante_encoding = face_recognition.face_encodings(solicitante_img)
 
     if not solicitante_encoding:
         return None
 
-    for pesid, fraud_image in blacklist_images:
-        fraud_img = face_recognition.load_image_file(fraud_image)
-        fraud_encoding = face_recognition.face_encodings(fraud_img)
+    for pesid, fraud_image_name in blacklist_images:
+        fraud_image_path = os.path.join(base_dir, fraud_image_name)
+        if os.path.isfile(fraud_image_path):
+            fraud_img = face_recognition.load_image_file(fraud_image_path)
+            fraud_encoding = face_recognition.face_encodings(fraud_img)
 
-        if not fraud_encoding:
-            continue
+            if not fraud_encoding:
+                continue
 
-        match = face_recognition.compare_faces([fraud_encoding[0]], solicitante_encoding[0])
-        if match[0]:
-            return pesid
+            match = face_recognition.compare_faces([fraud_encoding[0]], solicitante_encoding[0])
+            if match[0]:
+                return pesid
     return None
 
 def insert_suspeita(pesid):
@@ -54,18 +56,24 @@ def insert_suspeita(pesid):
     cursor.execute(query, (pesid, now))
     db_conn.commit()
 
-solicitantes_dir = r'C:\Users\vitor\PycharmProjects\face_recognition\Solicitantes'
+solicitantes_dir = r'C:\Users\joao.mendonca\Desktop\face_recognition\Solicitantes'
+homem_dir = r'C:\Users\joao.mendonca\Desktop\face_recognition\Homem'
+mulher_dir = r'C:\Users\joao.mendonca\Desktop\face_recognition\Mulher'
 
 solicitantes_images = get_solicitantes_images(solicitantes_dir)
 
 blacklist_images = get_blacklist_images()
 
 for solicitante_image in solicitantes_images:
-    fraudador_pesid = compare_images(solicitante_image, blacklist_images)
+    fraudador_pesid = compare_images(solicitante_image, blacklist_images, homem_dir)
     if fraudador_pesid:
-
         insert_suspeita(fraudador_pesid)
-        print(f"Fraudador identificado: {fraudador_pesid}")
+        print(f"Fraudador identificado no diretório 'Homem': {fraudador_pesid}")
+
+    fraudador_pesid = compare_images(solicitante_image, blacklist_images, mulher_dir)
+    if fraudador_pesid:
+        insert_suspeita(fraudador_pesid)
+        print(f"Fraudador identificado no diretório 'Mulher': {fraudador_pesid}")
 
 cursor.close()
 db_conn.close()
