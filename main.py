@@ -3,7 +3,9 @@ import face_recognition
 import os
 from datetime import datetime
 import matplotlib.pyplot as plt
+from scipy.stats import chi2_contingency
 
+# Configuração do banco de dados
 db_config = {
     'user': 'root',
     'password': '',
@@ -57,15 +59,17 @@ def insert_suspeita(pesid):
     cursor.execute(query, (pesid, now))
     db_conn.commit()
 
-def gerar_grafico(resultados_suspeitas):
+def gerar_grafico(resultados_suspeitas, total_solicitacoes):
     labels = list(resultados_suspeitas.keys())
     values = list(resultados_suspeitas.values())
 
+    # Gráfico de barras
     plt.bar(labels, values, color=['blue', 'orange'])
-    plt.title('Número de Correspondências Suspeitas por Diretório')
-    plt.xlabel('Diretórios')
+    plt.title('Número de Correspondências Suspeitas por Gênero')
+    plt.xlabel('Gênero')
     plt.ylabel('Número de Correspondências')
-
+    plt.axhline(y=total_solicitacoes/len(labels), color='r', linestyle='--', label='Média de Solicitações')
+    plt.legend()
     plt.show()
 
 solicitantes_dir = r'C:\Users\joao.mendonca\Desktop\face_recognition\Solicitantes'
@@ -73,7 +77,6 @@ homem_dir = r'C:\Users\joao.mendonca\Desktop\face_recognition\Homem'
 mulher_dir = r'C:\Users\joao.mendonca\Desktop\face_recognition\Mulher'
 
 solicitantes_images = get_solicitantes_images(solicitantes_dir)
-
 blacklist_images = get_blacklist_images()
 
 resultados_suspeitas = {
@@ -94,7 +97,22 @@ for solicitante_image in solicitantes_images:
         resultados_suspeitas['Mulher'] += 1
         print(f"Fraudador identificado no diretório 'Mulher': {fraudador_pesid}")
 
-gerar_grafico(resultados_suspeitas)
+# Gera o gráfico
+total_solicitacoes = len(solicitantes_images)
+gerar_grafico(resultados_suspeitas, total_solicitacoes)
+
+# Teste Qui-Quadrado
+observed = [[resultados_suspeitas['Homem'], resultados_suspeitas['Mulher']],
+            [total_solicitacoes - resultados_suspeitas['Homem'], total_solicitacoes - resultados_suspeitas['Mulher']]]
+chi2, p, dof, expected = chi2_contingency(observed)
+
+print(f"Chi2: {chi2}, p-valor: {p}")
+
+# Discussão
+if p < 0.05:
+    print("Há evidências suficientes para rejeitar a hipótese nula: existe uma relação significativa entre gênero e correspondências suspeitas.")
+else:
+    print("Não há evidências suficientes para rejeitar a hipótese nula: não existe uma relação significativa entre gênero e correspondências suspeitas.")
 
 cursor.close()
 db_conn.close()
