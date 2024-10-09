@@ -1,14 +1,14 @@
-import os
 import face_recognition
+import os
 
-def get_images_from_directory(directory):
-    return [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(('jpg', 'jpeg', 'png'))]
+def get_solicitantes_images(directory):
+    images = []
+    for file in os.listdir(directory):
+        if file.endswith(('jpg', 'jpeg', 'png')):
+            images.append(os.path.join(directory, file))
+    return images
 
 def load_and_encode_image(image_path):
-    try:
-        image = face_recognition.load_image_file(image_path)
-        encodings = face_recognition.face_encodings(image)
-        return encodings[0] if encodings else None
-    except Exception as e:
-        print(f"Erro ao carregar ou codificar a imagem {image_path}: {e}")
-        return None
+    image = face_recognition.load_image_file(image_path)
+    encodings = face_recognition.face_encodings(image)
+    return encodings[0] if encodings else None
