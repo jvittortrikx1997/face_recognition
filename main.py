@@ -3,12 +3,12 @@ from services.image_service import get_solicitantes_images
 from services.fraud_detection import get_blacklist_images, compare_images
 from models.suspeita import insert_suspeita
 from utils.graph import gerar_grafico
-from utils.metrics import calcular_acuracia, calcular_precisao, calcular_recall, calcular_f1_score, calcular_auc_roc
+from utils.metrics import calcular_acuracia, calcular_precisao, calcular_recall, calcular_f1_score, calcular_auc_roc, plot_metrica
 from scipy.stats import chi2_contingency
 
 solicitantes_dir = r'C:\Users\joao.mendonca\Desktop\face_recognition\Solicitantes'
-homem_dir = r'C:\Users\joao.mendonca\Desktop\face_recognition\Homem'
-mulher_dir = r'C:\Users\joao.mendonca\Desktop\face_recognition\Mulher'
+homem_dir = r'C:\Users\joao.mendonca\Desktop\face_recognition\Homem_Blacklist'
+mulher_dir = r'C:\Users\joao.mendonca\Desktop\face_recognition\Mulher_Blacklist'
 
 db_conn = get_db_connection()
 cursor = db_conn.cursor()
@@ -61,6 +61,10 @@ print(f"Precisão: {precisao:.2f}")
 print(f"Recall: {recall:.2f}")
 print(f"F1 Score: {f1:.2f}")
 print(f"AUC-ROC: {auc:.2f}")
+
+plot_metrica(['Acurácia', 'Precisão', 'Recall', 'F1 Score', 'AUC-ROC'],
+              [acuracia, precisao, recall, f1, auc],
+              0.5)
 
 total_solicitacoes = len(solicitantes_images)
 gerar_grafico(resultados_suspeitas, total_solicitacoes)
