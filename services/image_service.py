@@ -1,6 +1,9 @@
 import face_recognition
 import os
 
+from rich import print_json
+
+
 def get_solicitantes_images(directory):
     images = []
     for file in os.listdir(directory):

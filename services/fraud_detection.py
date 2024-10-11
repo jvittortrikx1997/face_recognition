@@ -12,11 +12,12 @@ def get_blacklist_images(cursor):
         INNER JOIN imagem ON blacklist.pesid = imagem.pesid
     """
     cursor.execute(query)
+
     return [(pesid, os.path.basename(caminho_imagem)) for pesid, caminho_imagem in cursor.fetchall()]
 
-def compare_images(solicitante_image, blacklist_images, base_dir, cursor, db_conn):
-    solicitante_encoding = load_and_encode_image(solicitante_image)
 
+def compare_images(solicitante_image, blacklist_images, base_dir, cursor, db_conn, is_real_comparison=False):
+    solicitante_encoding = load_and_encode_image(solicitante_image)
     if solicitante_encoding is None:
         return None
 
@@ -24,12 +25,13 @@ def compare_images(solicitante_image, blacklist_images, base_dir, cursor, db_con
         fraud_image_path = os.path.join(base_dir, fraud_image_name)
         if os.path.isfile(fraud_image_path):
             fraud_encoding = load_and_encode_image(fraud_image_path)
-
             if fraud_encoding is None:
                 continue
 
             match = face_recognition.compare_faces([fraud_encoding], solicitante_encoding)
+
             if match[0]:
-                insert_suspeita(cursor, db_conn, pesid, solicitante_image)
+                if is_real_comparison:
+                    insert_suspeita(cursor, db_conn, pesid, solicitante_image)
                 return pesid
     return None
