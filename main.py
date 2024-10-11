@@ -71,14 +71,16 @@ gerar_grafico(resultados_suspeitas, total_solicitacoes)
 
 observed = [[resultados_suspeitas['Homem'], resultados_suspeitas['Mulher']],
             [total_solicitacoes - resultados_suspeitas['Homem'], total_solicitacoes - resultados_suspeitas['Mulher']]]
-chi2, p, dof, expected = chi2_contingency(observed)
 
-print(f"Chi2: {chi2}, p-valor: {p}")
+categorias = ['Homens Suspeitos', 'Mulheres Suspeitas', 'Homens Não Suspeitos', 'Mulheres Não Suspeitas']
+valores = [observed[0][0], observed[0][1], observed[1][0], observed[1][1]]
 
-if p < 0.05:
-    print("Há evidências suficientes para rejeitar a hipótese nula: existe uma relação significativa entre gênero e correspondências suspeitas.")
-else:
-    print("Não há evidências suficientes para rejeitar a hipótese nula: não existe uma relação significativa entre gênero e correspondências suspeitas.")
+plt.bar(categorias, valores, color=['blue', 'pink', 'blue', 'pink'])
 
+plt.title('Contagem de Suspeitas por Gênero')
+plt.xlabel('Categoria')
+plt.ylabel('Contagem')
+
+plt.show()
 cursor.close()
 db_conn.close()
